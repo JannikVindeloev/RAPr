@@ -1,0 +1,303 @@
+---
+title: "RAPr workflow"
+author: "Jannik Vindeløv"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+# Introduction
+
+A work in progress. This is the alpha version of the package. For now it only contains functions for reading, plotting, smoothing, and extraction of feature points.
+
+Future enhancements will include functions for differentiating and contrasting (subtracting) individual wells and entire microtiter plates. In addition, functions for addding meta data such as experimental design and functions to plot and analyze them will also be added.
+
+Data from the package can be exported to csv files, that can be read and analyzed by e.g. simca.
+
+This vignette aims to show a possible workflow using this package.
+
+# Libraries
+Assuming you have installed R (3.2.1) and Rstudio (0.99.491+). Install and load into memory the following packages
+
+```{r libraries, warning=FALSE, message=FALSE}
+library(tidyr) # data frame manipulation tools
+library(dplyr) # data frame manipulation tools
+library(purrr) # functional programming tools
+library(ggplot2) # grammar of graphics plotting engine
+library(knitr) # to create pretty tables
+library(RAPr) # to manipulate RAP MTP data (in development) 
+```
+
+# Getting Help
+
+Getting help about the package and its functions type:
+
+```{r help, eval=FALSE}
+# Help about package
+help(package = RAPr)
+
+# Help about a particular function
+?xls_read
+```
+
+# Read Data
+
+To read a single file type the line below and navigate to the folder containing the excel file.
+```{r read_data, eval=FALSE}
+read_mtp_xls()
+```
+
+Alternatively, run the following script to read all data in a folder (here the "RAPdata" folder in the working directory)
+
+```{r read_all_data, eval=FALSE}
+
+raw_data <- read_folder("./myfolder")
+
+```
+
+This example does not work in this vignette, but the effect is similar to assigning the package data set to raw_data: 
+
+```{r read_all_data_2}
+raw_data <- df_mtp
+```
+
+# investigate the structure
+
+```{r structure}
+# as a table
+raw_data
+
+# as list
+glimpse(raw_data)
+
+# mtp object as a table
+raw_data$mtp[[1]]
+
+```
+
+
+# Plot curves
+
+Individual MTPs can be plotted:
+
+```{r induvidual_plot, fig.width=6}
+mtp_plot(raw_data$mtp[[1]], title = "First MTP")
+```
+
+or all mtp curves can be plotted to a pdf file in the working directory:
+
+```{r plot, eval=FALSE, fig.width=6}
+dl <- raw_data$mtp
+names(dl) <- with(raw_data, paste(file, sheet, Plate, sep="_"))
+
+plot_to_pdf(dl, file_name = "raw_plots.pdf")
+```
+
+open the pdf curves to inspect the data
+
+# Smooth curves
+
+The package uses LOcal regreESSion (LOESS) smoothing to smooth ou the noise.
+
+To smooth all microtiter plates do the following:
+
+```{r smooth}
+smooth_data <- df_mtp
+smooth_data$mtp <- purrr::map(smooth_data$mtp, mtp_smooth)
+```
+
+The smoothing functions have parameters that can be adjusted to suit your needs. See the help file.
+
+# Inspect smoothing
+
+With the smoothed data, we can inspect the quality of the smoothing:
+
+```{r inspect, fig.width = 6}
+mtp_plot(smooth_data$mtp[[1]], y_name = "fit")
+mtp_plot(smooth_data$mtp[[1]], y_name = "resid")
+mtp_plot(smooth_data$mtp[[1]], x_name = "value", y_name = "resid")
+```
+
+To save all files as pdf do the following:
+ 
+```{r inspect_pdf, eval=FALSE}
+# first make a named list
+dl <- smooth_data$mtp
+names(dl) <- with(smooth_data, paste(file, sheet, Plate, sep = "_"))
+
+# then plot
+plot_to_pdf(dl, file_name = "smooth_plots.pdf", y_name = "fit")
+plot_to_pdf(dl, file_name = "resid_plots.pdf", y_name = "resid")
+plot_to_pdf(dl, file_name = "resid_plots2.pdf", x_name = "value", y_name = "resid")
+
+```
+
+# Extract feature points
+
+with the smooth data, we would like to extract feature points:
+
+```{r}
+# calculate pH features: pH after 6 hours
+pH_after_xhrs <- smooth_data %>%
+  group_by(file, sheet, Plate) %>%
+  do(mtp_feature(.$mtp[[1]], x_out = c(6), feat_name = "pH_h")) 
+
+# look
+pH_after_xhrs
+
+#  calculate pH features: time to pH 5 and 6
+time_to_pH <- smooth_data %>%
+  group_by(file, sheet, Plate) %>%
+  do(mtp_feature(.$mtp[[1]], x_out = c(5,6), x_name = "fit", y_name = "hours", feat_name = "t_pH"))
+
+time_to_pH
+```
+
+# Manipulate and export to csv
+
+We can then reshape the data using the tidyr and dplyr packages and export to csv for further analysis in e.g. SIMCA
+
+```{r manipulate}
+
+simca_01 <- pH_after_xhrs %>%
+  spread(feature, value)
+
+simca_02 <- time_to_pH %>%
+  spread(feature, value)
+
+simca <- left_join(simca_01, simca_02)
+
+simca 
+
+write.csv(simca, "simca.csv")
+
+```
+
+# Adding additional information
+
+The feature points can also be further analysed in R by e.g. adding information about the experimental setup on the MTP. Ideally, this could be supplied as a file, but in this example we will create the data ourselves.
+
+In this particular experiment, "salt content" was varied with Ver. and "crystalban content" was varied with horizontal.
+
+```{r plate_setup}
+salt <- dplyr::data_frame(`Ver.` = as.factor(1:12),
+                                salt = seq(0, 5.3, length.out = 12))
+
+crystalban <- dplyr::data_frame(`Hor.` = as.factor(c("A", "B", "C", "D", "E", "F", "G", "H")),
+                                crystalban = seq(0, 2, length.out = 8))
+
+crystalban_salt <- dplyr::tbl_df(merge(crystalban, salt))
+
+crystalban_salt
+```
+
+we also need to assign cultures and temperatures to the 10 MTP's tested
+
+```{r experiment_setup}
+file = c("crystalban_salt_01.xls", "crystalban_salt_01.xls",
+                  "crystalban_salt_02.xls", "crystalban_salt_02.xls",
+                  "crystalban_salt_02.xls", "crystalban_salt_03_37.xls",
+                  "crystalban_salt_03_37.xls", "crystalban_salt_03_37.xls",
+                  "crystalban_salt_03_37.xls", "crystalban_salt_04_37.xls")
+
+Plate <- as.character(c(1, 2, 1, 2, 3, 1, 2, 3, 4, 1))
+
+culture <- rep(c("A3010", "A3020","A3030", "A3040", "A3050"),2)
+
+temperature <- c(rep(30, 5), rep(37, 5))
+
+experiment <- dplyr::data_frame(file,
+                                Plate,
+                                culture,
+                                temperature)
+
+experiment
+```
+
+We can now bind the experiment to the features:
+
+```{r experiment_features}
+setup <- pH_after_xhrs %>%
+  left_join(crystalban_salt) %>%
+  left_join(experiment)
+
+setup
+```
+
+# Analysis of experiment
+
+if we plot a heat map as a function of culture and temperature, it appears that only the salt content is inhibitort, especially at 37C:
+
+```{r heat_map, fig.width=6}
+setup %>%
+  ggplot(aes(x = salt, y = crystalban))+
+  geom_raster(aes(fill = value))+
+  facet_grid(temperature ~ culture)
+```
+
+we could also add a contour plot:
+
+```{r contour_map, fig.width=6}
+last_plot()+
+  geom_contour(aes(z = value), colour = "white")+
+  facet_grid(temperature ~ culture)
+```
+
+or a line plot
+```{r line_plot_01, fig.width=6}
+setup %>%
+  ggplot(aes(x = salt, y = value))+
+  geom_line(aes(colour = factor(round(crystalban,1))))+
+  facet_grid(temperature ~ culture)+
+  labs(colour = "crystalban %")
+```
+
+```{r line_plot_02, fig.width=6}
+setup %>%
+  ggplot(aes(x = crystalban, y = value))+
+  geom_line(aes(colour = factor(round(salt,1))))+
+  facet_grid(temperature ~ culture)+
+  labs(colour = "salt %")
+```
+
+Or make a simple interaction model
+
+```{r model01}
+model01 <- lm(value ~ 0 + culture+temperature*salt*crystalban + I(salt^2) + I(crystalban^2), data = setup)
+
+summary(model01)
+```
+
+It appaers that salt:crystalban and temperature:salt:crystalban can be removed
+
+```{r model02}
+model02 <- update(model01, . ~ . -salt:crystalban -temperature:salt:crystalban)
+summary(model02)
+```
+
+it appears we can also remove the squared effect of crystalban
+```{r model03}
+model03 <- update(model02, . ~ . -I(crystalban^2))
+summary(model03)
+anova(model01, model03)
+```
+
+lets look at the predictions:
+
+```{r predict, fig.width=6}
+setup$predictions <- predict(model03)
+
+setup %>%
+  ggplot(aes(x = salt, y = predictions))+
+  geom_point(aes(y = value), size = 1)+
+  geom_line(aes(colour = factor(round(crystalban,1))))+
+  facet_grid(temperature ~ culture)+
+  labs(colour = "crystalban %")
+
+```
+
+we see that there are some structural issues with this simple model but the conclusion appear sound: salt and crystal ban are inhibitory, especially at higher temperatures, salt more so than crystalban in the ranges tested
