@@ -21,3 +21,5 @@ Suggests: testthat,
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+URL: http://github.com/JannikVindelov/RAPr
+BugReports: http://github.com/JannikVindelov/RAPr/issues
