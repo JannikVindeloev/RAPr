@@ -14,9 +14,9 @@ Needs to be updated!
 
 # Introduction
 
-A work in progress. This is the alpha version of the package. For now it only contains functions for reading, plotting, smoothing, and extraction of feature points.
+A work in progress. This is the alpha version of the package. It contains functions for reading, plotting, smoothing, differentiating, contrasting and extracting of feature points from individual wells in a mtp.
 
-Future enhancements will include functions for differentiating and contrasting (subtracting) individual wells and entire microtiter plates. In addition, functions for addding meta data such as experimental design and functions to plot and analyze them will also be added.
+Future enhancements will include functions for differentiating and contrasting (subtracting) individual wells. In addition, functions for addding meta data such as experimental design and functions to plot and analyze them will also be added. Finally, it is my entention to include PCA and PLS and other routines enabling the entire analysis to be done in R.
 
 Data from the package can be exported to csv files, that can be read and analyzed by e.g. simca.
 
@@ -50,14 +50,14 @@ help(package = RAPr)
 
 To read a single file type the line below and navigate to the folder containing the excel file.
 ```{r read_data, eval=FALSE}
-read_mtp_xls()
+xls_read()
 ```
 
 Alternatively, run the following script to read all data in a folder (here the "RAPdata" folder in the working directory)
 
 ```{r read_all_data, eval=FALSE}
 
-raw_data <- read_folder("./myfolder")
+raw_data <- xls_folder_read("./myfolder")
 
 ```
 
@@ -87,7 +87,7 @@ raw_data$mtp[[1]]
 Individual MTPs can be plotted:
 
 ```{r induvidual_plot, fig.width=6}
-mtp_plot(raw_data$mtp[[1]], title = "First MTP")
+plot_mtp(raw_data$mtp[[1]], title = "First MTP")
 ```
 
 or all mtp curves can be plotted to a pdf file in the working directory:
@@ -109,7 +109,7 @@ To smooth all microtiter plates do the following:
 
 ```{r smooth}
 smooth_data <- df_mtp
-smooth_data$mtp <- purrr::map(smooth_data$mtp, mtp_smooth)
+smooth_data$mtp <- smooth_mtp_list(smooth_data$mtp)
 ```
 
 The smoothing functions have parameters that can be adjusted to suit your needs. See the help file.
@@ -119,9 +119,9 @@ The smoothing functions have parameters that can be adjusted to suit your needs.
 With the smoothed data, we can inspect the quality of the smoothing:
 
 ```{r inspect, fig.width = 6}
-mtp_plot(smooth_data$mtp[[1]], y_name = "fit")
-mtp_plot(smooth_data$mtp[[1]], y_name = "resid")
-mtp_plot(smooth_data$mtp[[1]], x_name = "value", y_name = "resid")
+plot_mtp(smooth_data$mtp[[1]], y_name = "fit")
+plot_mtp(smooth_data$mtp[[1]], y_name = "resid")
+plot_mtp(smooth_data$mtp[[1]], x_name = "value", y_name = "resid")
 ```
 
 To save all files as pdf do the following:
@@ -146,17 +146,25 @@ with the smooth data, we would like to extract feature points:
 # calculate pH features: pH after 6 hours
 pH_after_xhrs <- smooth_data %>%
   group_by(file, sheet, Plate) %>%
-  do(mtp_feature(.$mtp[[1]], x_out = c(6), feat_name = "pH_h")) 
+  do(mtp_pH_after_hours(.$mtp[[1]], x_out = c(6))) 
 
 # look
 pH_after_xhrs
 
-#  calculate pH features: time to pH 5 and 6
+#  calculate pH features: time to pH 5 and 6 (currently a little more elaborate)
 time_to_pH <- smooth_data %>%
   group_by(file, sheet, Plate) %>%
   do(mtp_feature(.$mtp[[1]], x_out = c(5,6), x_name = "fit", y_name = "hours", feat_name = "t_pH"))
 
 time_to_pH
+
+# calculate the slopes
+slopes <- smooth_data %>% 
+  group_by(file, sheet, Plate) %>%
+  do(mtp_slopes(.$mtp[[1]]))
+
+slopes
+
 ```
 
 # Manipulate and export to csv
@@ -225,7 +233,8 @@ We can now bind the experiment to the features:
 ```{r experiment_features}
 setup <- pH_after_xhrs %>%
   left_join(crystalban_salt) %>%
-  left_join(experiment)
+  left_join(experiment) %>% 
+  filter(feature == "hrs_fit6" )
 
 setup
 ```
@@ -245,8 +254,7 @@ we could also add a contour plot:
 
 ```{r contour_map, fig.width=6}
 last_plot()+
-  geom_contour(aes(z = value), colour = "white")+
-  facet_grid(temperature ~ culture)
+  geom_contour(aes(z = value), colour = "white")
 ```
 
 or a line plot
