@@ -2,7 +2,7 @@
 % Please edit documentation in R/interpolate.R
 \name{fun_xy}
 \alias{fun_xy}
-\title{Interpolation between \code{x}, \code{y} to find \code{y} for a given \code{x}}
+\title{Interpolation between curve points}
 \usage{
 fun_xy(df_mtp, x_out, x_name = "hours", y_name = "fit",
   feat_name = x_name)
@@ -22,11 +22,11 @@ fun_xy(df_mtp, x_out, x_name = "hours", y_name = "fit",
 returns a data frame with \code{feature} and \code{value}
 }
 \description{
-The function will currently find the mean \code{y} for a given \code{x}. Only works for
-monotonic functions. A future enhancement could be to loop through \code{y} segments
-to find \code{y} for a given \code{x} within each segment. This would be equivalent to
-rough root finding function. Such segments could be found using: \code{rlen(x >
-x_out)}
+The function will currently find the mean \code{y} for a given \code{x}. Only
+works for monotonic functions. A future enhancement could be to loop through
+\code{y} segments to find \code{y} for a given \code{x} within each segment.
+This would be equivalent to rough root finding function. Such segments could
+be found using: \code{rlen(x > x_out)}
 }
 \examples{
 # An example
@@ -34,15 +34,6 @@ df <- dplyr::data_frame(hours = 1:10, fit = 2*hours)
 class(df) <- c("mtp", "data.frame", "tbl_df")
 ggplot2::qplot(x= hours, y = fit, data = df, geom = "line")
 fun_xy(df, c(2.5, 3.2, 4.1))
-df <- dplyr::data_frame(hours = 1:10, fit = cos(2*pi*hours/10))
-ggplot2::qplot(x= hours, y = fit, data = df, geom = "line")
-ggplot2::qplot(x= fit, y = hours, data = df, geom = "line")
-ggplot2::qplot(x= fit[ord], y = hours[ord], data = df, geom = "path") + ggplot2::geom_line(ggplot2::aes(x = fit, y = hours), data = df, colour = "blue")
-fun_xy(df, c(2.5,8))
-
-# currently does not work
-fun_xy(df, 0.5, x_name = "fit", y_name = "hours")
-fun_xy(df, 6, y_name = "fit", x_name = "hours")
 
 }
 \seealso{

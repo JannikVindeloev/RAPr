@@ -4,10 +4,10 @@
 \alias{mtp_feature}
 \title{Find feature points for a MTP}
 \usage{
-mtp_feature(df_mtp, ...)
+mtp_feature(mtp, ...)
 }
 \arguments{
-\item{df_mtp}{a data frame of class mtp}
+\item{mtp}{a data frame of class mtp}
 
 \item{...}{parameters for the \code{\link{fun_xy}} function}
 }
@@ -26,7 +26,6 @@ mtp_feature(df_mtp$mtp[[1]], x_out = 5.5, x_name = "value", y_name = "hours")
 
 # reducing data set to whole hours
 reduced_data <- mtp_feature(df_mtp$mtp[[1]], x_out = c(1:10), y_name = "value")
-mtp_plot(reduced_data) + ggplot2::geom_point()
 
 # Calculating features for the whole data frame of mtp's
 # Make sure that each piece feed to the do() function is a mtp object.

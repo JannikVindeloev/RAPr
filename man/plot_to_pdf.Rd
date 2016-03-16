@@ -2,18 +2,18 @@
 % Please edit documentation in R/plot_mtp.R
 \name{plot_to_pdf}
 \alias{plot_to_pdf}
-\title{Takes a list of data frames of class \code{mtp} and plots them to pdf}
+\title{Takes a list of \code{mtp} objects and plots them to pdf}
 \usage{
-plot_to_pdf(dl, file_name = "my_plots.pdf", ...)
+plot_to_pdf(list_of_mtp, file_name = "my_plots.pdf", ...)
 }
 \arguments{
-\item{dl}{A list of \code{mtp} data frames}
+\item{list_of_mtp}{A list of \code{mtp} objects}
 }
 \value{
 nothing but saves a pdf files of \code{ggplot}'s
 }
 \description{
-Takes a list of data frames of class \code{mtp} and plots them to pdf
+Takes a list of \code{mtp} objects and plots them to pdf
 }
 \examples{
 library(dplyr)
@@ -27,6 +27,10 @@ plot_to_pdf(dl)
 
 }
 \seealso{
-\code{\link{plot_mtp}}, \code{\link{df_mtp}}
+\code{\link{plot_mtp}} for plotting a \code{mtp} object and
+  \code{\link{plot_mtp_list}} for making a list of \code{ggplot} objects
+
+Other plot.functions: \code{\link{plot_mtp_list}},
+  \code{\link{plot_mtp}}
 }
 
