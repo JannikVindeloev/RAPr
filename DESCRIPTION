@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Package: RAPr
 Type: Package
 Title: Functions and methods to manipulate micro titer plate time series
@@ -23,3 +24,30 @@ Suggests: testthat,
 VignetteBuilder: knitr
 URL: https://github.com/JannikVindelov/RAPr
 BugReports: https://github.com/JannikVindelov/RAPr/issues
+=======
+Package: RAPr
+Type: Package
+Title: Functions and methods to manipulate micro titer plate time series
+Version: 0.2
+Date: 2016-02-17
+Authors@R: person("Jannik", "Vindeloev", email = "dkjav@chr-hansen.com", role = c("aut", "cre"))
+Description: The package supplies tools for importing, manipulating, analysing
+    and visualising micro titer plate time series.
+License: GLP-2
+LazyData: TRUE
+Imports:
+    tidyr,
+    dplyr,
+    purrr,
+    ggplot2,
+    readxl,
+    magrittr,
+    assertthat
+RoxygenNote: 5.0.1
+Suggests: testthat,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+URL: https://github.com/JannikVindelov/RAPr
+BugReports: https://github.com/JannikVindelov/RAPr/issues
+>>>>>>> 6e54f7f95e1e33f9adb8dbe2bd31d29e0cc2792f
