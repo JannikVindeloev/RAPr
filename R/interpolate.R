@@ -1,10 +1,10 @@
-#' Interpolation between \code{x}, \code{y} to find \code{y} for a given \code{x}
+#' Interpolation between curve points
 #'
-#' The function will currently find the mean \code{y} for a given \code{x}. Only works for
-#' monotonic functions. A future enhancement could be to loop through \code{y} segments
-#' to find \code{y} for a given \code{x} within each segment. This would be equivalent to
-#' rough root finding function. Such segments could be found using: \code{rlen(x >
-#' x_out)}
+#' The function will currently find the mean \code{y} for a given \code{x}. Only
+#' works for monotonic functions. A future enhancement could be to loop through
+#' \code{y} segments to find \code{y} for a given \code{x} within each segment.
+#' This would be equivalent to rough root finding function. Such segments could
+#' be found using: \code{rlen(x > x_out)}
 #'
 #' @param df_mtp The data frame containing \code{x} and \code{y} to interpolate
 #' @param x_out the \code{x} to evaluate \code{y}
@@ -22,15 +22,6 @@
 #' class(df) <- c("mtp", "data.frame", "tbl_df")
 #' ggplot2::qplot(x= hours, y = fit, data = df, geom = "line")
 #' fun_xy(df, c(2.5, 3.2, 4.1))
-#' df <- dplyr::data_frame(hours = 1:10, fit = cos(2*pi*hours/10))
-#' ggplot2::qplot(x= hours, y = fit, data = df, geom = "line")
-#' ggplot2::qplot(x= fit, y = hours, data = df, geom = "line")
-#' ggplot2::qplot(x= fit[ord], y = hours[ord], data = df, geom = "path") + ggplot2::geom_line(ggplot2::aes(x = fit, y = hours), data = df, colour = "blue")
-#' fun_xy(df, c(2.5,8))
-#'
-#' # currently does not work
-#' fun_xy(df, 0.5, x_name = "fit", y_name = "hours")
-#' fun_xy(df, 6, y_name = "fit", x_name = "hours")
 #'
 fun_xy <- function(df_mtp, x_out, x_name = "hours", y_name = "fit", feat_name = x_name){
   x <- df_mtp[[x_name]]
@@ -39,21 +30,20 @@ fun_xy <- function(df_mtp, x_out, x_name = "hours", y_name = "fit", feat_name = 
   x <- x[ord]
   y <- y[ord]
 
-  assertthat::assert_that(is.numeric(x),
-                          is.numeric(y),
+  assertthat::assert_that(is.numeric(x), !any(is.na(x)),
+                          is.numeric(y), !any(is.na(y)),
                           is.numeric(x_out),
                           is.character(x_name),
                           is.character(y_name))
 
   df <- dplyr::as_data_frame(approx(x = x, y = y, xout = x_out, ties  = mean))
   names(df) <- c("feature", "value")
-  df %>%
-    mutate(feature = paste(feat_name, feature))
+  df %>% dplyr::mutate(feature = paste(feat_name, feature, sep = ""))
 }
 
 #' Find feature points for a MTP
 #'
-#' @param df_mtp a data frame of class mtp
+#' @param mtp a data frame of class mtp
 #' @param ... parameters for the \code{\link{fun_xy}} function
 #' @seealso \code{fun_xy} and \code{df_mtp}
 #'
@@ -69,7 +59,6 @@ fun_xy <- function(df_mtp, x_out, x_name = "hours", y_name = "fit", feat_name = 
 #'
 #' # reducing data set to whole hours
 #' reduced_data <- mtp_feature(df_mtp$mtp[[1]], x_out = c(1:10), y_name = "value")
-#' mtp_plot(reduced_data) + ggplot2::geom_point()
 #'
 #' # Calculating features for the whole data frame of mtp's
 #' # Make sure that each piece feed to the do() function is a mtp object.
@@ -79,11 +68,36 @@ fun_xy <- function(df_mtp, x_out, x_name = "hours", y_name = "fit", feat_name = 
 #' group_by(file, sheet, Plate) %>%
 #' do(mtp_feature(.$mtp[[1]], x_out = c(1,6)))
 #'
-mtp_feature <- function(df_mtp, ...){
-  #assertthat::assert_that("mtp" %in% class(df_mtp))
+mtp_feature <- function(mtp, ...){
+  assertthat::assert_that(inherits(mtp, "mtp"))
 
-  df_mtp %>%
-    dplyr::group_by(Hor., Ver.) %>%
+  mtp %>%
+    dplyr::group_by(Hor., Ver., Name) %>%
     dplyr::do(fun_xy(., ...))
-}
+    }
 
+#' calculate pH after x hours
+#'
+#' @param mtp A \code{mtp} object
+#' @param x_out the hours in which to evaluate pH
+#'
+#' @return Returns a data frame
+#' @export
+#'
+#' @examples
+#' pHhrs <- df_mtp$mtp[[1]]
+#' mtp_pH_after_hours(pHhrs) # error
+#' mtp_pH_after_hours(smooth_mtp(pHhrs))
+#' mtp_pH_after_hours(smooth_mtp(pHhrs),x_out = c(1,6,12))
+#'
+mtp_pH_after_hours <- function(mtp, x_out = NULL){
+  assertthat::assert_that(inherits(mtp, "mtp"))
+  if(is.null(x_out)){
+    message("x_out defaulting to 6")
+    x_out = 6
+  }
+
+  df_value <- mtp_feature(mtp, x_out = x_out, y_name = "value", feat_name = "hrs_val")
+  df_fit <- mtp_feature(mtp, x_out = x_out, y_name = "fit", feat_name = "hrs_fit")
+  dplyr::bind_rows(df_value, df_fit)
+}
