@@ -36,7 +36,7 @@ xls_read <- function(path = file.choose(), sheets = readxl::excel_sheets(path)) 
     dplyr::select(file, sheet, everything())
 
   # Check that the imported data frame has the right columns
-  assertthat::assert_that(has_columns(df))
+  # assertthat::assert_that(has_columns(df))
 
   # coerce into correct columns
   df <- df %>%
@@ -46,12 +46,11 @@ xls_read <- function(path = file.choose(), sheets = readxl::excel_sheets(path)) 
                   Name = as.character(Name))
 
 
-  # add unique curve id per MTP, fold, and remove NA values
+  # add unique curve id, and colour per MTP, fold, and remove NA values
   df <- df %>%
-    dplyr::group_by(file, sheet, ID, Plate) %>%
-    dplyr::mutate(curve_id = as.integer(seq(1, n()))) %>%
-    dplyr::ungroup() %>%
-    dplyr::select(file, sheet, ID, Plate, curve_id, everything()) %>%
+    dplyr::mutate(curve_id = as.integer(seq(1, n())),
+                  group = as.integer(factor(paste(file, sheet, ID, Plate)))) %>%
+    dplyr::select(file, sheet, ID, Plate, curve_id, group, everything()) %>%
     tidyr::gather(hours, value, -file:-Name) %>%
     dplyr::mutate(hours = as.numeric(hours)/60) %>%
     dplyr::filter(!is.na(value)) %>%

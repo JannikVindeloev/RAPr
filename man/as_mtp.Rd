@@ -20,10 +20,8 @@ Returns a df of class mtp
 Converts a data frame to a data frame of class mtp
 }
 \examples{
-df <- read_mtp_xls(path = system.file("extdata", "crystalban_salt_01.xls", package = "RAPr"))
-# select the first mtp
-df <- subset(df, Plate == "1")
-df_mtp <- as_mtp(df)
+df_mtp <- xls_read(path = system.file("extdata", "crystalban_salt_01.xls", package = "RAPr"))
+mtp <- df_mtp$mtp
 class(df_mtp)
 str(df_mtp)
 df_mtp
