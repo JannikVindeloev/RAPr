@@ -16,7 +16,7 @@ mtp_slopes <- function(mtp, start = NULL, end = NULL){
   assertthat::assert_that(inherits(mtp, "mtp"))
 
   mtp <- mtp %>%
-    dplyr::filter(!is.na(hours))
+    dplyr::filter(!is.na(hours) )
 
   min_hours <- min(mtp$hours, na.rm = TRUE)
   max_hours <- max(mtp$hours, na.rm = TRUE)
