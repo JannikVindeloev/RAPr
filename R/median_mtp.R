@@ -1,4 +1,4 @@
-#' Produces the median \class{mtp} objects from a list of \code{mtp} objects
+#' Produces the median \code{mtp} objects from a list of \code{mtp} objects
 #'
 #' @param list_of_mtp A list of \code{mtp} objects
 #'
@@ -12,9 +12,8 @@
 #'
 #' # using dplyr
 #' library(dplyr)
-#' combined02 <- df_mtp %>% dplyr::group_by(file) %>% dplyr::summarize(mtp = median_mtp_list(mtp)) #condensing
+#' combined02 <- df_mtp %>% dplyr::group_by(file) %>% dplyr::summarize(mtp = median_mtp_list(mtp))
 #' plot_mtp_list(combined$mtp)
-#'
 median_mtp_list <- function(list_of_mtp){
   combined <- purrr::map_df(list_of_mtp, dplyr::bind_rows)
   combined <- combined %>% group_by(Hor., Ver., hours) %>%

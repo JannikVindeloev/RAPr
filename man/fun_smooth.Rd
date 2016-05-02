@@ -2,7 +2,7 @@
 % Please edit documentation in R/fun_smooth.R
 \name{fun_smooth}
 \alias{fun_smooth}
-\title{Loess smothing of a well curve}
+\title{Loess smoothing of a well curve}
 \usage{
 fun_smooth(df, x_name = "hours", y_name = "value", no_points = NULL,
   fit_degree = 1)
@@ -14,17 +14,15 @@ fun_smooth(df, x_name = "hours", y_name = "value", no_points = NULL,
 
 \item{y_name}{the name of the y variable of type character}
 
-\item{no_points}{The number of points in the loess smooth window of type
-numeric. Defaults to 20% of the length of the x variable}
+\item{no_points}{The number of points in the loess smooth window of type numeric. Defaults to 20\% of the length of the x variable}
 
-\item{fit_degree}{The degree of the loess smooth polynomial of type numeric.
-must be less than or equal to 2}
+\item{fit_degree}{The degree of the loess smooth polynomial of type numeric must be less than or equal to 2}
 }
 \value{
 returns a \code{mtp} object
 }
 \description{
-Loess smothing of a well curve
+Loess smoothing of a well curve
 }
 \examples{
 df <- df_mtp$mtp[[1]]

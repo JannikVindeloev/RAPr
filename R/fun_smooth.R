@@ -1,12 +1,10 @@
-#' Loess smothing of a well curve
+#' Loess smoothing of a well curve
 #'
 #' @param df takes a \code{mtp} object as input
 #' @param x_name the name of the x variable of type character
 #' @param y_name the name of the y variable of type character
-#' @param no_points The number of points in the loess smooth window of type
-#'   numeric. Defaults to 20% of the length of the x variable
-#' @param fit_degree The degree of the loess smooth polynomial of type numeric.
-#'   must be less than or equal to 2
+#' @param no_points The number of points in the loess smooth window of type numeric. Defaults to 20\% of the length of the x variable
+#' @param fit_degree The degree of the loess smooth polynomial of type numeric must be less than or equal to 2
 #' @family smoothing functions
 #' @seealso \code{\link{smooth_mtp}} for mtp objects and \code{\link{smooth_mtp_list}} for lists of mtp objects
 #' @return returns a \code{mtp} object
@@ -16,7 +14,6 @@
 #' curve <- subset(df, curve_id == 1)
 #' fun_smooth(curve)
 #' fun_smooth(curve, no_points = 40)
-
 fun_smooth <- function(df, x_name = "hours", y_name = "value", no_points = NULL, fit_degree = 1) {
     x <- df[[x_name]]
     y <- df[[y_name]]
